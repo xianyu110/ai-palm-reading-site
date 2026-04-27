@@ -50,7 +50,7 @@ body::before {
 }
 
 a { color: inherit; }
-button, input, select, textarea { font: inherit; }
+button, input, select, textarea, input[type="url"], input[type="text"], input[type="password"] { font: inherit; }
 
 .site-header {
   position: sticky;
@@ -282,14 +282,14 @@ p { line-height: 1.75; }
   margin-bottom: 8px;
   font-weight: 700;
 }
-select, textarea {
+select, textarea, input[type="url"], input[type="text"], input[type="password"] {
   width: 100%;
   border: 1px solid rgba(17,16,12,.2);
   border-radius: 18px;
   color: var(--ink);
   background: rgba(255,255,255,.42);
 }
-select { padding: 13px 14px; }
+select, input[type="url"], input[type="text"], input[type="password"] { padding: 13px 14px; }
 .chip-field {
   display: flex;
   flex-wrap: wrap;
@@ -333,11 +333,15 @@ select { padding: 13px 14px; }
   object-fit: cover;
   filter: grayscale(1) contrast(1.08);
 }
-.prompt-output {
+.prompt-output, .api-panel {
   margin-top: 18px;
   padding: 18px;
   border-radius: 26px;
   background: rgba(17,16,12,.06);
+}
+.api-panel {
+  border: 1px solid rgba(17,16,12,.12);
+  background: rgba(255, 252, 242, .48);
 }
 .output-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 textarea {
@@ -348,6 +352,19 @@ textarea {
   line-height: 1.65;
 }
 .copy-button { padding: 10px 14px; }
+.copy-button:disabled { cursor: wait; opacity: .68; }
+.eyebrow.mini { margin: 0 0 6px; font-size: 11px; }
+.api-grid {
+  display: grid;
+  grid-template-columns: 1fr 150px 210px;
+  gap: 12px;
+  margin-top: 16px;
+}
+.api-grid label { display: grid; gap: 7px; }
+.api-grid span { color: rgba(17,16,12,.66); font-size: 13px; font-weight: 700; }
+.api-key-field { grid-column: 1 / -1; }
+#api-result { min-height: 150px; }
+
 
 .risk-section {
   display: grid;
@@ -413,6 +430,8 @@ textarea {
 @keyframes pulse { 50% { transform: scale(1.45); opacity: .56; } }
 
 @media (max-width: 920px) {
+  .api-grid { grid-template-columns: 1fr; }
+
   .site-header { align-items: flex-start; border-radius: 28px; }
   .nav { display: none; }
   .hero, .generator-grid, .risk-section { grid-template-columns: 1fr; }

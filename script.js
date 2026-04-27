@@ -5,6 +5,15 @@ const copyStatus = document.querySelector('#copy-status');
 const upload = document.querySelector('#hand-upload');
 const previewImage = document.querySelector('#preview-image');
 const previewPlaceholder = document.querySelector('.preview-placeholder');
+const apiBaseInput = document.querySelector('#api-base');
+const apiModelInput = document.querySelector('#api-model');
+const apiKeyInput = document.querySelector('#api-key');
+const apiEndpointInput = document.querySelector('#api-endpoint');
+const apiButton = document.querySelector('#run-api-button');
+const apiResult = document.querySelector('#api-result');
+const apiStatus = document.querySelector('#api-status');
+
+let imageDataUrl = '';
 
 const subjects = {
   hand: 'a clear palm photo',
@@ -12,11 +21,24 @@ const subjects = {
   face: 'a face photo, interpreted as a lighthearted visual character-reading guide',
 };
 
+const subjectLabels = {
+  hand: '手掌',
+  paw: '宠物爪子',
+  face: '面部轮廓',
+};
+
 const tones = {
   warm: 'warm, reassuring, emotionally intelligent, never deterministic',
   career: 'polished like a senior career coach or executive recruiter',
   mystic: 'cyber-mystic, poetic, subtle, modern rather than old-fashioned',
   skeptic: 'witty and self-aware, with gentle humor about the Barnum effect',
+};
+
+const toneLabels = {
+  warm: '温柔治愈',
+  career: '职场猎头感',
+  mystic: '赛博玄学',
+  skeptic: '半信半疑吐槽',
 };
 
 function selectedStyles() {
@@ -61,9 +83,137 @@ function previewFile(event) {
   previewImage.src = url;
   previewImage.hidden = false;
   previewPlaceholder.hidden = true;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    imageDataUrl = reader.result;
+    apiStatus.textContent = '图片已载入本地预览。调用 API 前请确认你愿意把这张图发送给该接口。';
+  };
+  reader.readAsDataURL(file);
+}
+
+function normalizeBaseUrl(value) {
+  const trimmed = value.trim().replace(/\/+$/, '');
+  if (!trimmed) return '';
+  return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
+}
+
+function readApiSettings() {
+  return {
+    baseUrl: apiBaseInput.value.trim(),
+    model: apiModelInput.value.trim(),
+    endpointMode: apiEndpointInput.value,
+    key: apiKeyInput.value.trim(),
+  };
+}
+
+function saveApiSettings() {
+  const { baseUrl, model, endpointMode, key } = readApiSettings();
+  localStorage.setItem('palm_api_base_url', baseUrl);
+  localStorage.setItem('palm_api_model', model);
+  localStorage.setItem('palm_api_endpoint', endpointMode);
+  localStorage.setItem('palm_api_key', key);
+}
+
+function loadApiSettings() {
+  apiBaseInput.value = localStorage.getItem('palm_api_base_url') || apiBaseInput.value;
+  apiModelInput.value = localStorage.getItem('palm_api_model') || apiModelInput.value;
+  apiEndpointInput.value = localStorage.getItem('palm_api_endpoint') || apiEndpointInput.value;
+  apiKeyInput.value = localStorage.getItem('palm_api_key') || '';
+}
+
+function extractMessage(payload) {
+  if (payload?.choices?.[0]?.message?.content) return payload.choices[0].message.content;
+  if (payload?.choices?.[0]?.text) return payload.choices[0].text;
+  if (payload?.output_text) return payload.output_text;
+  if (Array.isArray(payload?.output)) {
+    return payload.output.flatMap((item) => item.content || [])
+      .map((part) => part.text || part.output_text || '')
+      .filter(Boolean)
+      .join('\n');
+  }
+  return JSON.stringify(payload, null, 2);
+}
+
+async function runCustomApi() {
+  saveApiSettings();
+  const { baseUrl, model, endpointMode, key } = readApiSettings();
+  const endpoint = normalizeBaseUrl(baseUrl);
+
+  if (!endpoint || !model) {
+    apiStatus.textContent = '请先填写 API Base URL 和模型名。';
+    return;
+  }
+
+  apiButton.disabled = true;
+  apiButton.textContent = '生成中...';
+  apiStatus.textContent = '正在调用自定义 API。图片会发送给你填写的接口，请确认该接口可信。';
+  apiResult.value = '';
+
+  const subject = subjectLabels[form.subject.value];
+  const tone = toneLabels[form.tone.value];
+  const textPrompt = `你是一个负责娱乐向视觉解读的中文内容设计师。请基于用户上传的${subject}图片，生成一份适合放进极简黑白卡片海报里的中文文案。
+
+要求：
+1. 语气：${tone}，像高级但克制的个人洞察，不要恐吓，不要绝对预测。
+2. 输出结构：标题、3 个主要观察、3 张短卡片、1 句免责声明。
+3. 每条内容短、好看、适合排版。
+4. 明确提醒：这只是娱乐和自我反思，不是事实判断、医疗建议、财务建议或命运预测。
+
+参考视觉提示词：
+${output.value}`;
+
+  const userContent = [{ type: 'text', text: textPrompt }];
+  if (imageDataUrl) {
+    userContent.push({ type: 'image_url', image_url: { url: imageDataUrl } });
+  }
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (key) headers.Authorization = `Bearer ${key}`;
+
+  try {
+    const isResponses = endpointMode === 'responses';
+    const response = await fetch(`${endpoint}/${isResponses ? 'responses' : 'chat/completions'}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(isResponses ? {
+        model,
+        input: [
+          { role: 'system', content: [{ type: 'input_text', text: '你只输出中文，内容用于娱乐向 AI 手相/爪相/面相视觉卡片。' }] },
+          { role: 'user', content: userContent.map((part) => part.type === 'text'
+            ? { type: 'input_text', text: part.text }
+            : { type: 'input_image', image_url: part.image_url.url }) },
+        ],
+        temperature: 0.8,
+      } : {
+        model,
+        messages: [
+          { role: 'system', content: '你只输出中文，内容用于娱乐向 AI 手相/爪相/面相视觉卡片。' },
+          { role: 'user', content: userContent },
+        ],
+        temperature: 0.8,
+      }),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload?.error?.message || payload?.message || `HTTP ${response.status}`);
+    }
+
+    apiResult.value = extractMessage(payload);
+    apiStatus.textContent = '生成完成。你可以复制这段文案继续做图。';
+  } catch (error) {
+    apiStatus.textContent = `调用失败：${error.message}。如果是浏览器 CORS 限制，需要在接口侧允许 GitHub Pages 域名跨域访问。`;
+  } finally {
+    apiButton.disabled = false;
+    apiButton.textContent = '调用 API';
+  }
 }
 
 form.addEventListener('input', buildPrompt);
 copyButton.addEventListener('click', copyPrompt);
 upload.addEventListener('change', previewFile);
+apiButton.addEventListener('click', runCustomApi);
+[apiBaseInput, apiModelInput, apiEndpointInput, apiKeyInput].forEach((input) => input.addEventListener('change', saveApiSettings));
+loadApiSettings();
 buildPrompt();

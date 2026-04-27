@@ -22,6 +22,7 @@
       </a>
       <nav class="nav" aria-label="页面导航">
         <a href="#generator">生成提示词</a>
+        <a href="#api">API 直连</a>
         <a href="#privacy">隐私提醒</a>
         <a href="#about">玩法逻辑</a>
       </nav>
@@ -33,7 +34,7 @@
           <p class="eyebrow">AI 玄学 / Prompt Remix / Client-only</p>
           <h1 id="hero-title">把「AI 看手相」做成一张高级极简指南。</h1>
           <p class="hero-text">
-            这个站点根据微信文章里的爆火玩法重做：上传手掌照片只在浏览器本地预览，选择风格后生成一段可复制提示词，去你自己的 AI 图像工具里生成黑白线稿 + 圆角卡片版解读图。
+            这个站点根据微信文章里的爆火玩法重做：上传手掌照片只在浏览器本地预览，选择风格后生成一段可复制提示词，可以复制到 AI 图像工具，也可以填入自定义 API 直接生成一段结构化解读。
           </p>
           <div class="hero-actions">
             <a class="button primary" href="#generator">开始生成</a>
@@ -42,7 +43,7 @@
           <div class="trust-strip" role="list" aria-label="站点特性">
             <span role="listitem">不上传图片</span>
             <span role="listitem">可复制提示词</span>
-            <span role="listitem">GitHub Pages 静态部署</span>
+            <span role="listitem">可直连自定义 API</span>
           </div>
         </div>
 
@@ -131,6 +132,39 @@
               </div>
               <textarea id="prompt-output" readonly aria-label="生成的提示词"></textarea>
               <p class="microcopy" id="copy-status" aria-live="polite">建议先遮挡指纹细节，或使用不常用于解锁/门禁的手。</p>
+            </div>
+
+            <div class="api-panel" id="api" aria-label="自定义 API 设置">
+              <div class="output-header">
+                <div>
+                  <p class="eyebrow mini">Custom API</p>
+                  <h3>用 gpt-5.5 直接解读</h3>
+                </div>
+                <button class="copy-button" id="run-api-button" type="button">调用 API</button>
+              </div>
+              <div class="api-grid">
+                <label>
+                  <span>API Base URL</span>
+                  <input id="api-base" type="url" value="https://apipro.maynor1024.live/" autocomplete="off" />
+                </label>
+                <label>
+                  <span>模型</span>
+                  <input id="api-model" type="text" value="gpt-5.5" autocomplete="off" />
+                </label>
+                <label>
+                  <span>端点</span>
+                  <select id="api-endpoint">
+                    <option value="chat">/v1/chat/completions</option>
+                    <option value="responses">/v1/responses</option>
+                  </select>
+                </label>
+                <label class="api-key-field">
+                  <span>API Key（只保存在本机浏览器）</span>
+                  <input id="api-key" type="password" placeholder="如果你的接口不需要 key，可留空" autocomplete="off" />
+                </label>
+              </div>
+              <textarea id="api-result" readonly aria-label="API 解读结果" placeholder="调用后会在这里显示 AI 输出。"></textarea>
+              <p class="microcopy" id="api-status" aria-live="polite">静态站无法安全内置密钥；这里会从你的浏览器直接请求 OpenAI-compatible API，支持 /v1/chat/completions 和 /v1/responses。</p>
             </div>
           </section>
         </div>
