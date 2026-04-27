@@ -25,14 +25,14 @@ git init
 git add .
 git commit -m "Build AI palm reading prompt site"
 git branch -M main
-git remote add origin git@github.com:YOUR_NAME/ai-palm-reading-site.git
+git remote add origin git@github.com:xianyu110/ai-palm-reading-site.git
 git push -u origin main
 ```
 
 部署完成后，站点地址通常是：
 
 ```text
-https://YOUR_NAME.github.io/ai-palm-reading-site/
+https://xianyu110.github.io/ai-palm-reading-site/
 ```
 
 ## 内容说明
