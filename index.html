@@ -138,7 +138,7 @@
               <div class="output-header">
                 <div>
                   <p class="eyebrow mini">Custom API</p>
-                  <h3>用 gpt-5.5 直接解读</h3>
+                  <h3>用 gpt-image-2-all 生成图</h3>
                 </div>
                 <button class="copy-button" id="run-api-button" type="button">调用 API</button>
               </div>
@@ -149,11 +149,12 @@
                 </label>
                 <label>
                   <span>模型</span>
-                  <input id="api-model" type="text" value="gpt-5.5" autocomplete="off" />
+                  <input id="api-model" type="text" value="gpt-image-2-all" autocomplete="off" />
                 </label>
                 <label>
                   <span>端点</span>
                   <select id="api-endpoint">
+                    <option value="images" selected>/v1/images/generations</option>
                     <option value="chat">/v1/chat/completions</option>
                     <option value="responses">/v1/responses</option>
                   </select>
@@ -163,8 +164,9 @@
                   <input id="api-key" type="password" placeholder="如果你的接口不需要 key，可留空" autocomplete="off" />
                 </label>
               </div>
-              <textarea id="api-result" readonly aria-label="API 解读结果" placeholder="调用后会在这里显示 AI 输出。"></textarea>
-              <p class="microcopy" id="api-status" aria-live="polite">静态站无法安全内置密钥；这里会从你的浏览器直接请求 OpenAI-compatible API，支持 /v1/chat/completions 和 /v1/responses。</p>
+              <div class="image-result" id="image-result" hidden></div>
+              <textarea id="api-result" readonly aria-label="API 输出结果" placeholder="调用后会在这里显示 AI 输出；如果是图片生成，会在上方显示图片。"></textarea>
+              <p class="microcopy" id="api-status" aria-live="polite">静态站无法安全内置密钥；这里会从你的浏览器直接请求 OpenAI-compatible API，默认使用 /v1/images/generations，也保留 chat/responses。</p>
             </div>
           </section>
         </div>

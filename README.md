@@ -41,10 +41,10 @@ https://xianyu110.github.io/ai-palm-reading-site/
 
 ```text
 API Base URL: https://apipro.maynor1024.live/
-Model: gpt-5.5
+Model: gpt-image-2-all
 ```
 
-前端会从浏览器直接请求 OpenAI-compatible `POST /v1/chat/completions` 或 `POST /v1/responses`。API Key 只保存到当前浏览器的 `localStorage`，不会提交到仓库。GitHub Pages 是纯静态托管，不能安全内置服务端密钥。
+前端会从浏览器直接请求 OpenAI-compatible `POST /v1/images/generations`，并保留 `POST /v1/chat/completions` / `POST /v1/responses`。API Key 只保存到当前浏览器的 `localStorage`，不会提交到仓库。GitHub Pages 是纯静态托管，不能安全内置服务端密钥。
 
 ## 内容说明
 

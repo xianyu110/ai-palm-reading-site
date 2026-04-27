@@ -364,6 +364,26 @@ textarea {
 .api-grid span { color: rgba(17,16,12,.66); font-size: 13px; font-weight: 700; }
 .api-key-field { grid-column: 1 / -1; }
 #api-result { min-height: 150px; }
+.image-result {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid rgba(17,16,12,.14);
+  border-radius: 24px;
+  background: rgba(255,255,255,.36);
+}
+.image-result img {
+  display: block;
+  width: 100%;
+  max-height: 620px;
+  object-fit: contain;
+  border-radius: 18px;
+}
+.image-result a {
+  display: inline-block;
+  margin-top: 10px;
+  font-weight: 700;
+}
+
 
 
 .risk-section {

@@ -11,6 +11,7 @@ const apiKeyInput = document.querySelector('#api-key');
 const apiEndpointInput = document.querySelector('#api-endpoint');
 const apiButton = document.querySelector('#run-api-button');
 const apiResult = document.querySelector('#api-result');
+const imageResult = document.querySelector('#image-result');
 const apiStatus = document.querySelector('#api-status');
 
 let imageDataUrl = '';
@@ -135,6 +136,20 @@ function extractMessage(payload) {
   return JSON.stringify(payload, null, 2);
 }
 
+
+function renderImageResult(payload) {
+  const item = payload?.data?.[0];
+  const imageUrl = item?.url || (item?.b64_json ? `data:image/png;base64,${item.b64_json}` : '');
+  if (!imageUrl) {
+    imageResult.hidden = false;
+    imageResult.innerHTML = '<p>接口返回成功，但没有找到 data[0].url 或 data[0].b64_json。</p>';
+    return;
+  }
+
+  imageResult.hidden = false;
+  imageResult.innerHTML = `<img src="${imageUrl}" alt="AI 生成的手相视觉指南" />${item?.url ? `<a href="${imageUrl}" target="_blank" rel="noreferrer">打开原图</a>` : ''}`;
+}
+
 async function runCustomApi() {
   saveApiSettings();
   const { baseUrl, model, endpointMode, key } = readApiSettings();
@@ -147,8 +162,12 @@ async function runCustomApi() {
 
   apiButton.disabled = true;
   apiButton.textContent = '生成中...';
-  apiStatus.textContent = '正在调用自定义 API。图片会发送给你填写的接口，请确认该接口可信。';
+  apiStatus.textContent = endpointMode === 'images'
+    ? '正在调用图片生成接口。/v1/images/generations 通常只接收提示词，不会发送上传图片。'
+    : '正在调用自定义 API。图片会发送给你填写的接口，请确认该接口可信。';
   apiResult.value = '';
+  imageResult.hidden = true;
+  imageResult.innerHTML = '';
 
   const subject = subjectLabels[form.subject.value];
   const tone = toneLabels[form.tone.value];
@@ -172,11 +191,19 @@ ${output.value}`;
   if (key) headers.Authorization = `Bearer ${key}`;
 
   try {
+    const isImages = endpointMode === 'images';
     const isResponses = endpointMode === 'responses';
-    const response = await fetch(`${endpoint}/${isResponses ? 'responses' : 'chat/completions'}`, {
+    const response = await fetch(`${endpoint}/${isImages ? 'images/generations' : isResponses ? 'responses' : 'chat/completions'}`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(isResponses ? {
+      body: JSON.stringify(isImages ? {
+        model,
+        prompt: `${output.value}
+
+Important: generate the final shareable visual guide image directly. Do not mention that no reference image was attached. Use a clean palm-reading inspired line-art composition with rounded cards and Chinese microcopy.`,
+        n: 1,
+        size: '1024x1024',
+      } : isResponses ? {
         model,
         input: [
           { role: 'system', content: [{ type: 'input_text', text: '你只输出中文，内容用于娱乐向 AI 手相/爪相/面相视觉卡片。' }] },
@@ -200,8 +227,14 @@ ${output.value}`;
       throw new Error(payload?.error?.message || payload?.message || `HTTP ${response.status}`);
     }
 
-    apiResult.value = extractMessage(payload);
-    apiStatus.textContent = '生成完成。你可以复制这段文案继续做图。';
+    if (isImages) {
+      renderImageResult(payload);
+      apiResult.value = JSON.stringify(payload, null, 2);
+      apiStatus.textContent = '图片生成完成。/v1/images/generations 是文生图端点，上传图片只作为本地参考预览。';
+    } else {
+      apiResult.value = extractMessage(payload);
+      apiStatus.textContent = '生成完成。你可以复制这段文案继续做图。';
+    }
   } catch (error) {
     apiStatus.textContent = `调用失败：${error.message}。如果是浏览器 CORS 限制，需要在接口侧允许 GitHub Pages 域名跨域访问。`;
   } finally {
