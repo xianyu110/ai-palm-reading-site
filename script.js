@@ -117,9 +117,15 @@ function saveApiSettings() {
 }
 
 function loadApiSettings() {
+  const savedModel = localStorage.getItem('palm_api_model');
+  const savedEndpoint = localStorage.getItem('palm_api_endpoint');
   apiBaseInput.value = localStorage.getItem('palm_api_base_url') || apiBaseInput.value;
-  apiModelInput.value = localStorage.getItem('palm_api_model') || apiModelInput.value;
-  apiEndpointInput.value = localStorage.getItem('palm_api_endpoint') || apiEndpointInput.value;
+  apiModelInput.value = savedModel && !['gpt5.5', 'gpt-5.5'].includes(savedModel)
+    ? savedModel
+    : apiModelInput.value;
+  apiEndpointInput.value = savedEndpoint && savedModel && !['gpt5.5', 'gpt-5.5'].includes(savedModel)
+    ? savedEndpoint
+    : apiEndpointInput.value;
   apiKeyInput.value = localStorage.getItem('palm_api_key') || '';
 }
 
