@@ -140,7 +140,10 @@
                   <p class="eyebrow mini">Custom API</p>
                   <h3>用 gpt-image-2-all 生成图</h3>
                 </div>
-                <button class="copy-button" id="run-api-button" type="button">调用 API</button>
+                <div class="api-actions">
+                  <button class="button ghost compact" id="test-api-button" type="button">测试连接</button>
+                  <button class="copy-button" id="run-api-button" type="button">调用 API</button>
+                </div>
               </div>
               <div class="api-grid">
                 <label>
@@ -165,8 +168,8 @@
                 </label>
               </div>
               <div class="image-result" id="image-result" hidden></div>
-              <textarea id="api-result" readonly aria-label="API 输出结果" placeholder="调用后会在这里显示 AI 输出；如果是图片生成，会在上方显示图片。"></textarea>
-              <p class="microcopy" id="api-status" aria-live="polite">静态站无法安全内置密钥；这里会从你的浏览器直接请求 OpenAI-compatible API，默认使用 /v1/images/generations，也保留 chat/responses。</p>
+              <textarea id="api-result" readonly aria-label="API 输出结果" placeholder="这里会显示连接测试、错误详情或原始返回；如果是图片生成，会在上方显示图片。"></textarea>
+              <p class="microcopy" id="api-status" aria-live="polite">静态站无法安全内置密钥；先点“测试连接”确认浏览器能直连；再点“调用 API”生成图片。默认使用 /v1/images/generations。</p>
             </div>
           </section>
         </div>

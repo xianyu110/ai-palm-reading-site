@@ -344,6 +344,8 @@ select, input[type="url"], input[type="text"], input[type="password"] { padding:
   background: rgba(255, 252, 242, .48);
 }
 .output-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.api-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.button.compact { padding: 10px 14px; }
 textarea {
   min-height: 190px;
   margin-top: 14px;

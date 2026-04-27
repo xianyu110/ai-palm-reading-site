@@ -10,6 +10,7 @@ const apiModelInput = document.querySelector('#api-model');
 const apiKeyInput = document.querySelector('#api-key');
 const apiEndpointInput = document.querySelector('#api-endpoint');
 const apiButton = document.querySelector('#run-api-button');
+const testApiButton = document.querySelector('#test-api-button');
 const apiResult = document.querySelector('#api-result');
 const imageResult = document.querySelector('#image-result');
 const apiStatus = document.querySelector('#api-status');
@@ -129,6 +130,50 @@ function loadApiSettings() {
   apiKeyInput.value = localStorage.getItem('palm_api_key') || '';
 }
 
+function buildImagePrompt() {
+  const subject = subjectLabels[form.subject.value];
+  const tone = toneLabels[form.tone.value];
+  const styles = selectedStyles();
+  const visualStyle = styles.length ? styles.join(', ') : 'clean minimal visual language';
+
+  return `Create a final shareable AI ${subject} reading guide image.
+
+Visual direction: ${visualStyle}. Use a premium editorial layout, a clean black contour illustration, delicate guide lines, numbered callouts, compact rounded insight cards, balanced whitespace, and warm white paper texture.
+
+Chinese copy direction: ${tone}. Write short, elegant Chinese microcopy. Make it feel personal and emotionally intelligent, but avoid absolute predictions, medical claims, financial promises, or fear-based fortune telling. Include a tiny disclaimer that it is for entertainment and self-reflection only.
+
+Output: one polished square image, high-end minimal black-and-white design, crisp typography, ready to share on social media.`;
+}
+
+function endpointPath(endpointMode) {
+  if (endpointMode === 'images') return 'images/generations';
+  if (endpointMode === 'responses') return 'responses';
+  return 'chat/completions';
+}
+
+function makeAbortSignal(timeoutMs = 240000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return { signal: controller.signal, cancel: () => clearTimeout(timer) };
+}
+
+async function readResponsePayload(response) {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { raw: text };
+  }
+}
+
+function formatFetchError(error) {
+  if (error.name === 'AbortError') {
+    return '请求超时：浏览器等了 240 秒仍没有收到完整响应。请调高接口网关超时，或改用后端代理/异步任务。';
+  }
+  return `${error.name || 'Error'}: ${error.message || error}`;
+}
+
 function extractMessage(payload) {
   if (payload?.choices?.[0]?.message?.content) return payload.choices[0].message.content;
   if (payload?.choices?.[0]?.text) return payload.choices[0].text;
@@ -156,6 +201,51 @@ function renderImageResult(payload) {
   imageResult.innerHTML = `<img src="${imageUrl}" alt="AI 生成的手相视觉指南" />${item?.url ? `<a href="${imageUrl}" target="_blank" rel="noreferrer">打开原图</a>` : ''}`;
 }
 
+async function testCustomApi() {
+  saveApiSettings();
+  const { baseUrl, endpointMode } = readApiSettings();
+  const endpoint = normalizeBaseUrl(baseUrl);
+
+  if (!endpoint) {
+    apiStatus.textContent = '请先填写 API Base URL。';
+    return;
+  }
+
+  testApiButton.disabled = true;
+  testApiButton.textContent = '测试中...';
+  apiResult.value = '';
+  imageResult.hidden = true;
+  imageResult.innerHTML = '';
+
+  const url = `${endpoint}/${endpointPath(endpointMode)}`;
+  const startedAt = performance.now();
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(endpointMode === 'images'
+        ? { model: 'connection-test', prompt: 'connection test', n: 1, size: '1024x1024' }
+        : { model: 'connection-test', messages: [{ role: 'user', content: 'connection test' }] }),
+    });
+    const payload = await readResponsePayload(response);
+    const ms = Math.round(performance.now() - startedAt);
+    apiResult.value = JSON.stringify({ ok: response.ok, status: response.status, elapsed_ms: ms, payload }, null, 2);
+    apiStatus.textContent = response.status === 401
+      ? '连接测试通过：浏览器能直连 API，401 是因为测试请求故意没有带 Key。'
+      : `连接测试完成：HTTP ${response.status}，耗时 ${ms}ms。`;
+  } catch (error) {
+    apiResult.value = formatFetchError(error);
+    apiStatus.textContent = '连接测试失败：浏览器无法完成请求。若是 ERR_CONNECTION_CLOSED，多半是接口网关/上游主动断开。';
+  } finally {
+    testApiButton.disabled = false;
+    testApiButton.textContent = '测试连接';
+  }
+}
+
 async function runCustomApi() {
   saveApiSettings();
   const { baseUrl, model, endpointMode, key } = readApiSettings();
@@ -167,9 +257,10 @@ async function runCustomApi() {
   }
 
   apiButton.disabled = true;
+  testApiButton.disabled = true;
   apiButton.textContent = '生成中...';
   apiStatus.textContent = endpointMode === 'images'
-    ? '正在调用图片生成接口。/v1/images/generations 通常只接收提示词，不会发送上传图片。'
+    ? '正在调用图片生成接口，可能需要 1-3 分钟。/v1/images/generations 通常只接收提示词，不会发送上传图片。'
     : '正在调用自定义 API。图片会发送给你填写的接口，请确认该接口可信。';
   apiResult.value = '';
   imageResult.hidden = true;
@@ -199,14 +290,17 @@ ${output.value}`;
   try {
     const isImages = endpointMode === 'images';
     const isResponses = endpointMode === 'responses';
-    const response = await fetch(`${endpoint}/${isImages ? 'images/generations' : isResponses ? 'responses' : 'chat/completions'}`, {
+    const timeout = makeAbortSignal();
+    const response = await fetch(`${endpoint}/${endpointPath(endpointMode)}`, {
       method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-store',
+      signal: timeout.signal,
       headers,
       body: JSON.stringify(isImages ? {
         model,
-        prompt: `${output.value}
-
-Important: generate the final shareable visual guide image directly. Do not mention that no reference image was attached. Use a clean palm-reading inspired line-art composition with rounded cards and Chinese microcopy.`,
+        prompt: buildImagePrompt(),
         n: 1,
         size: '1024x1024',
       } : isResponses ? {
@@ -228,7 +322,8 @@ Important: generate the final shareable visual guide image directly. Do not ment
       }),
     });
 
-    const payload = await response.json().catch(() => ({}));
+    const payload = await readResponsePayload(response);
+    timeout.cancel();
     if (!response.ok) {
       throw new Error(payload?.error?.message || payload?.message || `HTTP ${response.status}`);
     }
@@ -242,9 +337,11 @@ Important: generate the final shareable visual guide image directly. Do not ment
       apiStatus.textContent = '生成完成。你可以复制这段文案继续做图。';
     }
   } catch (error) {
-    apiStatus.textContent = `调用失败：${error.message}。如果是浏览器 CORS 限制，需要在接口侧允许 GitHub Pages 域名跨域访问。`;
+    apiResult.value = formatFetchError(error);
+    apiStatus.textContent = `调用失败：${formatFetchError(error)}。如果 Chrome 显示 ERR_CONNECTION_CLOSED，通常是接口侧/网关/上游主动断开，而不是页面参数错误。`;
   } finally {
     apiButton.disabled = false;
+    testApiButton.disabled = false;
     apiButton.textContent = '调用 API';
   }
 }
@@ -253,6 +350,7 @@ form.addEventListener('input', buildPrompt);
 copyButton.addEventListener('click', copyPrompt);
 upload.addEventListener('change', previewFile);
 apiButton.addEventListener('click', runCustomApi);
+testApiButton.addEventListener('click', testCustomApi);
 [apiBaseInput, apiModelInput, apiEndpointInput, apiKeyInput].forEach((input) => input.addEventListener('change', saveApiSettings));
 loadApiSettings();
 buildPrompt();
