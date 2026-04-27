@@ -366,6 +366,7 @@ textarea {
 .api-grid span { color: rgba(17,16,12,.66); font-size: 13px; font-weight: 700; }
 .api-key-field { grid-column: 1 / -1; }
 #api-result { min-height: 150px; }
+.compact-textarea { min-height: 86px; margin-top: 0; }
 .image-result {
   margin-top: 16px;
   padding: 12px;

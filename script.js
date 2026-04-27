@@ -9,6 +9,7 @@ const apiBaseInput = document.querySelector('#api-base');
 const apiModelInput = document.querySelector('#api-model');
 const apiKeyInput = document.querySelector('#api-key');
 const apiEndpointInput = document.querySelector('#api-endpoint');
+const imageUrlsInput = document.querySelector('#image-urls');
 const apiButton = document.querySelector('#run-api-button');
 const testApiButton = document.querySelector('#test-api-button');
 const apiResult = document.querySelector('#api-result');
@@ -89,7 +90,7 @@ function previewFile(event) {
   const reader = new FileReader();
   reader.onload = () => {
     imageDataUrl = reader.result;
-    apiStatus.textContent = '图片已载入本地预览。调用 API 前请确认你愿意把这张图发送给该接口。';
+    apiStatus.textContent = '图片已载入本地预览。Apifox 文档要求 image 使用公网 URL 数组；本地文件不会直接发送给 /v1/images/generations。';
   };
   reader.readAsDataURL(file);
 }
@@ -100,21 +101,32 @@ function normalizeBaseUrl(value) {
   return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
 }
 
+
+function parseImageUrls() {
+  return imageUrlsInput.value
+    .split(/\n|,/)
+    .map((url) => url.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
 function readApiSettings() {
   return {
     baseUrl: apiBaseInput.value.trim(),
     model: apiModelInput.value.trim(),
     endpointMode: apiEndpointInput.value,
     key: apiKeyInput.value.trim(),
+    imageUrls: parseImageUrls(),
   };
 }
 
 function saveApiSettings() {
-  const { baseUrl, model, endpointMode, key } = readApiSettings();
+  const { baseUrl, model, endpointMode, key, imageUrls } = readApiSettings();
   localStorage.setItem('palm_api_base_url', baseUrl);
   localStorage.setItem('palm_api_model', model);
   localStorage.setItem('palm_api_endpoint', endpointMode);
   localStorage.setItem('palm_api_key', key);
+  localStorage.setItem('palm_image_urls', imageUrlsInput.value.trim());
 }
 
 function loadApiSettings() {
@@ -128,6 +140,7 @@ function loadApiSettings() {
     ? savedEndpoint
     : apiEndpointInput.value;
   apiKeyInput.value = localStorage.getItem('palm_api_key') || '';
+  imageUrlsInput.value = localStorage.getItem('palm_image_urls') || '';
 }
 
 function buildImagePrompt() {
@@ -248,7 +261,7 @@ async function testCustomApi() {
 
 async function runCustomApi() {
   saveApiSettings();
-  const { baseUrl, model, endpointMode, key } = readApiSettings();
+  const { baseUrl, model, endpointMode, key, imageUrls } = readApiSettings();
   const endpoint = normalizeBaseUrl(baseUrl);
 
   if (!endpoint || !model) {
@@ -260,7 +273,7 @@ async function runCustomApi() {
   testApiButton.disabled = true;
   apiButton.textContent = '生成中...';
   apiStatus.textContent = endpointMode === 'images'
-    ? '正在调用图片生成接口，可能需要 1-3 分钟。/v1/images/generations 通常只接收提示词，不会发送上传图片。'
+    ? '正在调用图片生成接口，可能需要 1-3 分钟。按 Apifox 文档，参考图会作为 image URL 数组发送。' 
     : '正在调用自定义 API。图片会发送给你填写的接口，请确认该接口可信。';
   apiResult.value = '';
   imageResult.hidden = true;
@@ -284,7 +297,7 @@ ${output.value}`;
     userContent.push({ type: 'image_url', image_url: { url: imageDataUrl } });
   }
 
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = { 'Accept': 'application/json', 'Content-Type': 'application/json' };
   if (key) headers.Authorization = `Bearer ${key}`;
 
   try {
@@ -300,9 +313,10 @@ ${output.value}`;
       headers,
       body: JSON.stringify(isImages ? {
         model,
-        prompt: buildImagePrompt(),
-        n: 1,
         size: '1024x1024',
+        n: 1,
+        prompt: buildImagePrompt(),
+        ...(imageUrls.length ? { image: imageUrls } : {}),
       } : isResponses ? {
         model,
         input: [
@@ -331,7 +345,9 @@ ${output.value}`;
     if (isImages) {
       renderImageResult(payload);
       apiResult.value = JSON.stringify(payload, null, 2);
-      apiStatus.textContent = '图片生成完成。/v1/images/generations 是文生图端点，上传图片只作为本地参考预览。';
+      apiStatus.textContent = imageUrls.length
+        ? `图片生成完成。已按文档发送 ${imageUrls.length} 张参考图 URL。`
+        : '图片生成完成。未填写参考图 URL，本次按纯文本 prompt 生成。';
     } else {
       apiResult.value = extractMessage(payload);
       apiStatus.textContent = '生成完成。你可以复制这段文案继续做图。';
@@ -351,6 +367,6 @@ copyButton.addEventListener('click', copyPrompt);
 upload.addEventListener('change', previewFile);
 apiButton.addEventListener('click', runCustomApi);
 testApiButton.addEventListener('click', testCustomApi);
-[apiBaseInput, apiModelInput, apiEndpointInput, apiKeyInput].forEach((input) => input.addEventListener('change', saveApiSettings));
+[apiBaseInput, apiModelInput, apiEndpointInput, apiKeyInput, imageUrlsInput].forEach((input) => input.addEventListener('change', saveApiSettings));
 loadApiSettings();
 buildPrompt();

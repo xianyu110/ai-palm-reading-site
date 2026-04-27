@@ -166,10 +166,14 @@
                   <span>API Key（只保存在本机浏览器）</span>
                   <input id="api-key" type="password" placeholder="如果你的接口不需要 key，可留空" autocomplete="off" />
                 </label>
+                <label class="api-key-field">
+                  <span>参考图 URL（可选，按 Apifox 文档传 image 数组；多张用换行或逗号分隔，最多 5 张）</span>
+                  <textarea id="image-urls" class="compact-textarea" placeholder="https://example.com/hand.png"></textarea>
+                </label>
               </div>
               <div class="image-result" id="image-result" hidden></div>
               <textarea id="api-result" readonly aria-label="API 输出结果" placeholder="这里会显示连接测试、错误详情或原始返回；如果是图片生成，会在上方显示图片。"></textarea>
-              <p class="microcopy" id="api-status" aria-live="polite">静态站无法安全内置密钥；先点“测试连接”确认浏览器能直连；再点“调用 API”生成图片。默认使用 /v1/images/generations。</p>
+              <p class="microcopy" id="api-status" aria-live="polite">静态站无法安全内置密钥；Apifox 文档中 gpt-image-2-all 支持 image: URL 数组；本地上传仅预览，生成时请填公网参考图 URL。</p>
             </div>
           </section>
         </div>

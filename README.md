@@ -44,7 +44,7 @@ API Base URL: https://apipro.maynor1024.live/
 Model: gpt-image-2-all
 ```
 
-前端会从浏览器直接请求 OpenAI-compatible `POST /v1/images/generations`，并保留 `POST /v1/chat/completions` / `POST /v1/responses`。API Key 只保存到当前浏览器的 `localStorage`，不会提交到仓库。GitHub Pages 是纯静态托管，不能安全内置服务端密钥。
+前端会从浏览器直接请求 OpenAI-compatible `POST /v1/images/generations`，并保留 `POST /v1/chat/completions` / `POST /v1/responses`。根据 Apifox 的 `创建 gpt-image-2-all` 文档，图片参考使用 JSON 字段 `image: ["https://..."]`，因此页面提供“参考图 URL”输入框；本地上传只做预览，不会直接作为文件上传。API Key 只保存到当前浏览器的 `localStorage`，不会提交到仓库。GitHub Pages 是纯静态托管，不能安全内置服务端密钥。
 
 ## 内容说明
 
