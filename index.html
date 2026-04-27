@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>掌纹不是命运｜AI 手相提示词生成器</title>
+    <meta
+      name="description"
+      content="一个受 AI 手相玩法启发的静态网站：本地预览手掌照片、生成高级极简风提示词，并提醒生物特征隐私风险。"
+    />
+    <meta property="og:title" content="掌纹不是命运｜AI 手相提示词生成器" />
+    <meta property="og:description" content="把 AI 手相玩法做成一个可复制提示词、可本地预览、带隐私提醒的 GitHub Pages 网站。" />
+    <meta property="og:type" content="website" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="回到首页">
+        <span class="brand-mark">掌</span>
+        <span>Cyber Palm Guide</span>
+      </a>
+      <nav class="nav" aria-label="页面导航">
+        <a href="#generator">生成提示词</a>
+        <a href="#privacy">隐私提醒</a>
+        <a href="#about">玩法逻辑</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">AI 玄学 / Prompt Remix / Client-only</p>
+          <h1 id="hero-title">把「AI 看手相」做成一张高级极简指南。</h1>
+          <p class="hero-text">
+            这个站点根据微信文章里的爆火玩法重做：上传手掌照片只在浏览器本地预览，选择风格后生成一段可复制提示词，去你自己的 AI 图像工具里生成黑白线稿 + 圆角卡片版解读图。
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#generator">开始生成</a>
+            <a class="button ghost" href="#privacy">先看风险</a>
+          </div>
+          <div class="trust-strip" role="list" aria-label="站点特性">
+            <span role="listitem">不上传图片</span>
+            <span role="listitem">可复制提示词</span>
+            <span role="listitem">GitHub Pages 静态部署</span>
+          </div>
+        </div>
+
+        <div class="hero-card reveal" style="--delay: 120ms" aria-label="AI 手相风格示意图">
+          <div class="scan-label">PALM / LINE MAP</div>
+          <svg class="palm-art" viewBox="0 0 420 520" role="img" aria-labelledby="palm-title palm-desc">
+            <title id="palm-title">手掌线稿示意</title>
+            <desc id="palm-desc">由细线、掌纹路径和浮动分析卡片组成的手掌图形。</desc>
+            <path class="hand" d="M204 455c-62-8-105-55-113-128-4-36-4-89-5-128 0-21 28-22 31-2l8 70 2-168c0-25 34-27 37-2l7 147 8-196c2-26 38-26 40 0l6 197 16-170c3-24 36-21 35 3l-7 178 23-101c5-22 36-16 33 7l-28 143c-12 66-35 141-94 150Z" />
+            <path class="line life" d="M131 165c41 32 68 73 65 139-2 45-23 82-54 112" />
+            <path class="line heart" d="M126 233c54-28 118-27 173 5" />
+            <path class="line head" d="M129 286c58 16 108 31 161 65" />
+            <path class="line fate" d="M211 421c-3-95 0-176 16-258" />
+            <circle class="node n1" cx="127" cy="233" r="5" />
+            <circle class="node n2" cx="227" cy="163" r="5" />
+            <circle class="node n3" cx="290" cy="351" r="5" />
+          </svg>
+          <div class="insight-card card-one">
+            <b>长期主义</b>
+            <span>适合把模糊机会拆成连续行动。</span>
+          </div>
+          <div class="insight-card card-two">
+            <b>边界感</b>
+            <span>温和，但不轻易被他人节奏带走。</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="generator-section" id="generator" aria-labelledby="generator-title">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Prompt Generator</p>
+          <h2 id="generator-title">生成你的 AI 手相提示词</h2>
+          <p>提示词是重新改写版，保留「极简、细线、高级卡片、手掌主线」这些核心要素，避免直接复刻原文。</p>
+        </div>
+
+        <div class="generator-grid">
+          <form class="control-panel reveal" id="prompt-form">
+            <label class="upload-box" for="hand-upload">
+              <input id="hand-upload" type="file" accept="image/*" />
+              <span class="upload-icon">+</span>
+              <strong>选择手掌照片</strong>
+              <small>仅用于本地预览，不会离开你的浏览器。</small>
+            </label>
+
+            <div class="field-group">
+              <label for="subject">对象</label>
+              <select id="subject" name="subject">
+                <option value="hand">我的手掌</option>
+                <option value="paw">宠物爪子</option>
+                <option value="face">面部轮廓</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label for="tone">解读语气</label>
+              <select id="tone" name="tone">
+                <option value="warm">温柔治愈</option>
+                <option value="career">职场猎头感</option>
+                <option value="mystic">赛博玄学</option>
+                <option value="skeptic">半信半疑吐槽</option>
+              </select>
+            </div>
+
+            <fieldset class="field-group chip-field">
+              <legend>视觉风格</legend>
+              <label><input type="checkbox" name="style" value="thin lines" checked /> 细线轮廓</label>
+              <label><input type="checkbox" name="style" value="rounded premium cards" checked /> 圆角卡片</label>
+              <label><input type="checkbox" name="style" value="black ink on warm white paper" checked /> 黑白暖纸</label>
+              <label><input type="checkbox" name="style" value="editorial magazine layout" /> 杂志排版</label>
+            </fieldset>
+          </form>
+
+          <section class="preview-panel reveal" style="--delay: 120ms" aria-label="预览与提示词">
+            <div class="preview-frame" id="preview-frame">
+              <div class="preview-placeholder">
+                <span>HAND PREVIEW</span>
+                <small>上传后在这里预览</small>
+              </div>
+              <img id="preview-image" alt="已选择的本地图片预览" hidden />
+            </div>
+
+            <div class="prompt-output">
+              <div class="output-header">
+                <h3>可复制提示词</h3>
+                <button class="copy-button" id="copy-button" type="button">复制</button>
+              </div>
+              <textarea id="prompt-output" readonly aria-label="生成的提示词"></textarea>
+              <p class="microcopy" id="copy-status" aria-live="polite">建议先遮挡指纹细节，或使用不常用于解锁/门禁的手。</p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="risk-section" id="privacy" aria-labelledby="privacy-title">
+        <div class="risk-copy reveal">
+          <p class="eyebrow">Privacy First</p>
+          <h2 id="privacy-title">手掌照片不是普通自拍。</h2>
+          <p>
+            手掌、指纹、面部都属于高度敏感的生物特征。这个静态站不上传、不分析、不存储图片；如果你把图片交给第三方 AI 工具，请先确认它的隐私政策、训练设置和删除机制。
+          </p>
+        </div>
+        <div class="risk-cards">
+          <article class="risk-card reveal" style="--delay: 80ms">
+            <span>01</span>
+            <h3>先降敏</h3>
+            <p>裁掉指尖、降低纹路清晰度，保留足够轮廓即可。</p>
+          </article>
+          <article class="risk-card reveal" style="--delay: 160ms">
+            <span>02</span>
+            <h3>别当诊断</h3>
+            <p>这些解读更多是巴纳姆效应与情绪价值，不是事实判断。</p>
+          </article>
+          <article class="risk-card reveal" style="--delay: 240ms">
+            <span>03</span>
+            <h3>看清去向</h3>
+            <p>不要把生物特征交给来源不明的套壳应用或陌生服务器。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="about-section" id="about" aria-labelledby="about-title">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Why It Works</p>
+          <h2 id="about-title">它不是算得准，是夸得刚刚好。</h2>
+        </div>
+        <div class="story-grid">
+          <article class="story-card reveal">
+            <h3>高端视觉先建立信任</h3>
+            <p>极简黑白线稿、圆角卡片、细线标注，会让普通套话看起来像专业报告。</p>
+          </article>
+          <article class="story-card reveal" style="--delay: 80ms">
+            <h3>描述足够普遍</h3>
+            <p>“长期主义”“边界感”“适合策略型工作”这类描述，很多成年人都会觉得像自己。</p>
+          </article>
+          <article class="story-card reveal" style="--delay: 160ms">
+            <h3>情绪价值完成闭环</h3>
+            <p>你明知道它可能是编的，但被温柔、精准、漂亮地讲述时，仍然会被击中。</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>AI 玄学内容仅供娱乐，切勿轻信。本站为文章玩法再创作，不复制原文内容。</p>
+      <a href="https://mp.weixin.qq.com/s/STE16R0TWGeLepi9HqKPlQ" rel="noreferrer" target="_blank">查看灵感来源</a>
+    </footer>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
